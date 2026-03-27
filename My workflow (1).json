@@ -1,0 +1,215 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "46a058bc-3cdb-41e6-946b-5d42c9ff3a3f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/users/octocat",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "88b23b0c-f979-445d-9b2d-8bdcff419001",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "149be300-6788-461b-8525-3e63c917b1d5",
+              "leftValue": "={{$json[\"followers\"]}}",
+              "rightValue": 100,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "d9c12abf-527f-41f7-a8ac-a5e224e4f219",
+              "leftValue": "={{$json[\"public_repos\"]}}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ad2796e8-ee6d-47e0-97da-f059f366aec0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "instructions": "Generate a 1-line sales pitch for this user.\n\nBio: {{$json[\"bio\"]}}\nCompany: {{$json[\"company\"]}}",
+        "codeGeneratedForPrompt": "Generate a 1-line sales pitch for this user.\n\nBio: {{$json[\"bio\"]}}\nCompany: {{$json[\"company\"]}}",
+        "jsCode": "const items = $input.all();\nconst salesPitch = items.map((item) => {\n  return {\n    json: {\n      salesPitch: `Meet ${item.json.name} from ${item.json.company}. ${item.json.bio}`,\n    },\n    pairedItem: items.indexOf(item),\n  };\n});\nreturn salesPitch;\n"
+      },
+      "type": "n8n-nodes-base.aiTransform",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "6167cb0c-bcf0-4e8a-82ed-72078ce430bc",
+      "name": "AI Transform"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/1486553873589211217/s0zme99dCCmYkxc2aQIvyqabT85QkawROUuc3Yoqkk8NtbUkPu4s_PabvUZsD0pTb0TR",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "=🚀 High Value Lead Found!\\n\\nName: {{$json.login}}\\n\\nBio: {{$json.bio}}\\n\\nAI Pitch:\\n{{$json.salesPitch}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "5b726128-d40a-476c-921a-a61383c4d85a",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "84101ba7-33bf-4406-9450-52dcc0ab0c12",
+              "name": "login",
+              "value": "={{$node[\"If\"].json[\"login\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "6b4efa53-8798-4817-9d02-668dafdb9d83",
+              "name": "bio",
+              "value": "={{$node[\"If\"].json[\"bio\"] || \"No bio available\"}}",
+              "type": "string"
+            },
+            {
+              "id": "03413f18-0524-438b-b932-62f517c9c37d",
+              "name": "salesPitch",
+              "value": "={{$json[\"salesPitch\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        48
+      ],
+      "id": "67b61fff-0f30-42b8-9291-226a888717fa",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Transform": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "74fb10a4-922b-4ccd-8685-024b77270e1e",
+  "meta": {
+    "instanceId": "c933bf6fb42edf337b1f617a8acb49b1e98b202bbe9a64ea490dfdcb61cac684"
+  },
+  "id": "eijuPZ0ixzMe4Hbu",
+  "tags": []
+}
